@@ -1,14 +1,17 @@
 FROM nginx
 
+# Pull openssl
 RUN apt-get update \
-	&& apt-get install openssl \
+	&& apt-get install --no-install-recommends -y openssl \
 	&& rm -rf /var/lib/apt/lists/*
 
-# Generate our self-signed certificate
+# Create working directories
 RUN mkdir -p /ssl
 WORKDIR /ssl
-RUN openssl req -subj '/CN=localhost' -x509 -newkey rsa:4096 -nodes -keyout key.pem -out cert.pem -days 365
 
+# Copy configurations
 COPY virtual-site.template /etc/nginx/conf.d/virtual-site.template
+COPY entrypoint.sh /opt/entrypoint.sh
 
-CMD ["/bin/bash", "-c", "export DOLLAR='$' && envsubst < /etc/nginx/conf.d/virtual-site.template > /etc/nginx/conf.d/default.conf && cat /etc/nginx/conf.d/default.conf && exec nginx -g 'daemon off;'"]
+# Docker entrypoiny
+CMD ["/bin/bash", "-c", "/opt/entrypoint.sh"]
